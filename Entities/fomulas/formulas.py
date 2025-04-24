@@ -1,6 +1,7 @@
 import pandas as pd
 from copy import deepcopy
 from datetime import datetime
+import numpy as np
 
 def criar_colunas_por_data(df:pd.DataFrame, datas:list, *, coluna:str='Descrição') -> pd.DataFrame:
     df_final = deepcopy(df[coluna]) #type:ignore
@@ -40,6 +41,7 @@ def __criar_sub_total(df: pd.DataFrame, *, coluna_primaria:str, colunas:list) ->
 def criar_acumulado(df: pd.DataFrame, datas:list, *, coluna:str) -> pd.DataFrame:
     df_temp = deepcopy(df)
     
+    #import pdb; pdb.set_trace()
     subtotal = df_temp.sum()
     subtotal[coluna] = 'Total Despesas'
     subtotal = subtotal.reindex(df.columns)
@@ -55,6 +57,7 @@ def criar_colunas_calculadas(
         _datas:list,
         *,
         sub_total:bool=False,
+        somar_ultima_coluna:bool=False,
         ) -> pd.DataFrame:
     
     
@@ -80,18 +83,26 @@ def criar_colunas_calculadas(
             df_final[nome_coluna_r] = 0     
                 
                 
+    nome_coluna_p = f"V.H % {ultimo_mes_extenso} - (2m - µ)"    
+    
     
     if sub_total:
+        if somar_ultima_coluna:
+            df_final[nome_coluna_p] = divisao_entre_duas_colunas(df_final[nome_coluna_r], df_final[datas[-1]])
         colunas = []
         colunas += datas
-        colunas += ['Total', 'Repres.%', nome_coluna_r]
+        if somar_ultima_coluna:
+            colunas += ['Total', 'Repres.%', nome_coluna_r, nome_coluna_p]
+        else:
+            colunas += ['Total', 'Repres.%', nome_coluna_r]
+        
         df_final = __criar_sub_total(df_final,
                                      coluna_primaria='Descrição',
                                      colunas=colunas
                                      )
-    
-    nome_coluna_p = f"V.H % {ultimo_mes_extenso} - (2m - µ)"         
-    df_final[nome_coluna_p] = round(df_final[nome_coluna_r] / df_final[datas[-1]], 2)
+        
+    if not somar_ultima_coluna:
+        df_final[nome_coluna_p] = divisao_entre_duas_colunas(df_final[nome_coluna_r], df_final[datas[-1]])
     
     return df_final
 
@@ -106,3 +117,21 @@ def ordenar(
     df = df.sort_values(coluna) #type:ignore
     
     return df
+
+
+def divisao_entre_duas_colunas(df1:pd.Series, df2:pd.Series, *, _round:int=2) -> list:
+    numerador = df1.tolist()
+    denominador = df2.tolist()
+    
+    if len(numerador) != len(denominador):
+        raise ValueError("As listas devem ter o mesmo tamanho.")
+    
+    resultado = []
+    for num in range(len(numerador)):
+        try:
+            resultado.append(round(numerador[num] / denominador[num], _round))
+        except:
+            resultado.append(0)
+            
+    return resultado
+
