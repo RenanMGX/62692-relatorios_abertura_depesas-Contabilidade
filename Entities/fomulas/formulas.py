@@ -1,0 +1,108 @@
+import pandas as pd
+from copy import deepcopy
+from datetime import datetime
+
+def criar_colunas_por_data(df:pd.DataFrame, datas:list, *, coluna:str='Descrição') -> pd.DataFrame:
+    df_final = deepcopy(df[coluna]) #type:ignore
+    df_final.drop_duplicates(inplace=True)
+    
+    
+    for data in datas:
+        df_temp:pd.DataFrame = deepcopy(df[[coluna,'Montante em moeda interna', 'Ano/Mês']])
+                              
+        df_temp = df_temp[
+            df_temp['Ano/Mês'] == data
+        ]
+                                
+        df_temp["Montante em moeda interna"] = pd.to_numeric(df_temp["Montante em moeda interna"], errors="coerce")
+                
+        df_temp = df_temp.groupby([coluna], as_index=False).sum().round(2)
+        df_temp.drop(columns=['Ano/Mês'], inplace=True, errors='ignore')
+
+        df_temp.rename(columns={'Montante em moeda interna': data}, inplace=True)
+                
+        df_final:pd.DataFrame = pd.merge(df_temp, df_final, how='outer', on=coluna).fillna(0).round(2)
+    
+    return df_final
+
+def __criar_sub_total(df: pd.DataFrame, *, coluna_primaria:str, colunas:list) -> pd.DataFrame:
+    
+    # Calcula o subtotal das colunas numéricas
+    subtotal = df[colunas].sum()
+    subtotal[coluna_primaria] = 'Subtotal'
+
+    # Reordena as colunas para ficar na mesma ordem do DataFrame original
+    subtotal = subtotal.reindex(df.columns)
+
+    # Concatena a linha de subtotal no final do DataFrame
+    return pd.concat([df, subtotal.to_frame().T], ignore_index=True)
+
+def criar_acumulado(df: pd.DataFrame, datas:list, *, coluna:str) -> pd.DataFrame:
+    df_temp = deepcopy(df)
+    
+    subtotal = df_temp.sum()
+    subtotal[coluna] = 'Total Despesas'
+    subtotal = subtotal.reindex(df.columns)
+    
+    subtotal = pd.concat([df_temp, subtotal.to_frame().T], ignore_index=True)
+
+    subtotal = criar_colunas_calculadas(subtotal, datas)
+    
+    return subtotal[subtotal[coluna] == "Total Despesas"]
+    
+def criar_colunas_calculadas(
+        df_final:pd.DataFrame,
+        _datas:list,
+        *,
+        sub_total:bool=False,
+        ) -> pd.DataFrame:
+    
+    
+    datas = deepcopy(_datas) #type:ignore       
+    datas.reverse() #type:ignore
+    
+    df_final['Total'] = df_final[datas].sum(axis=1).round(2) #type:ignore
+            
+    total = df_final['Total'].sum()#.round(2)
+            
+    df_final['Repres.%'] = df_final.apply(lambda x: round(x['Total']/ total, 4), axis=1)
+            
+    ultimo_mes_extenso = datetime.strptime(datas[-1], '%Y/%m').strftime('%b/%y')
+            
+    nome_coluna_r = f"V.H R$ {ultimo_mes_extenso} - (2m - µ)"
+    if len(datas) == 1:
+        df_final[nome_coluna_r] = df_final[datas[0]].round(2)
+    elif len(datas) == 2:
+        df_final[nome_coluna_r] = round(df_final[datas[1]] - df_final[datas[0]], 2)
+    elif len(datas) >= 3:
+        df_final[nome_coluna_r] = round(df_final[datas[-1]] - df_final[datas[0:-1]].mean(axis=1), 2) #type:ignore
+    else:
+            df_final[nome_coluna_r] = 0     
+                
+                
+    
+    if sub_total:
+        colunas = []
+        colunas += datas
+        colunas += ['Total', 'Repres.%', nome_coluna_r]
+        df_final = __criar_sub_total(df_final,
+                                     coluna_primaria='Descrição',
+                                     colunas=colunas
+                                     )
+    
+    nome_coluna_p = f"V.H % {ultimo_mes_extenso} - (2m - µ)"         
+    df_final[nome_coluna_p] = round(df_final[nome_coluna_r] / df_final[datas[-1]], 2)
+    
+    return df_final
+
+def ordenar(
+    df: pd.DataFrame,
+    *,
+    coluna:str,
+    ordem:list
+    ) -> pd.DataFrame:# ordem desejada
+    
+    df[coluna] = pd.Categorical(df[coluna], categories=ordem, ordered=True)
+    df = df.sort_values(coluna) #type:ignore
+    
+    return df
