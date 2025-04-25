@@ -1,7 +1,7 @@
 from Entities.dependencies.sap import SAPManipulation
 from Entities.dependencies.config import Config
 from Entities.dependencies.credenciais import Credential
-from Entities.dependencies.functions import Functions
+from Entities.dependencies.functions import Functions, P
 from time import sleep
 import os
 import shutil
@@ -53,12 +53,13 @@ class ExtrairRelatorio(SAPManipulation):
     
 
     @SAPManipulation.start_SAP  
-    def fbl3n(self, *, relatorio:Literal['despAdm', 'despCom', 'outrasDesp'], date=datetime.now()) -> str|Exception:
+    def fbl3n(self, *, relatorio:Literal['despAdm', 'despCom', 'outrasDesp'], date:datetime) -> str:
         try:
+            print(P(f"Extraindo relatório {relatorio}...", color='cyan'))
             self.session.findById("wnd[0]/tbar[0]/okcd").text = "/n fbl3n"
             self.session.findById("wnd[0]").sendVKey(0)
             self.session.findById("wnd[0]").maximize()
-                        
+            
             self.session.findById("wnd[0]/tbar[1]/btn[17]").press()
             self.session.findById("wnd[1]/usr/txtV-LOW").text = self.dict_relatorios[relatorio]['variante_nome']
             self.session.findById("wnd[1]/usr/txtENAME-LOW").text = self.dict_relatorios[relatorio]['variante_usuario']
@@ -71,7 +72,8 @@ class ExtrairRelatorio(SAPManipulation):
             
             if "Nenhuma partida selecionada" in (text:=self.session.findById("wnd[0]/sbar/pane[0]").text):
                 self.fechar_sap()
-                return Exception(text)
+                print(P(text, color='red'))
+                raise Exception(text)
             
             file_path = os.path.join(ExtrairRelatorio.download_path, datetime.now().strftime(f"%Y%m%d_%H%M%S_{self.dict_relatorios[relatorio]['relatorio_path']}"))
 
@@ -81,6 +83,7 @@ class ExtrairRelatorio(SAPManipulation):
             self.session.findById("wnd[1]/usr/ctxtDY_FILENAME").text = os.path.basename(file_path)
             self.session.findById("wnd[1]/tbar[0]/btn[0]").press()
             
+            print(P(f"Relatório {relatorio} extraído com sucesso!", color='green'))
             sleep(7)
             Functions.fechar_excel(file_path)
             
@@ -89,7 +92,7 @@ class ExtrairRelatorio(SAPManipulation):
             return file_path
         except Exception as err:
             self.fechar_sap()
-            return err
+            raise err
 
 
 

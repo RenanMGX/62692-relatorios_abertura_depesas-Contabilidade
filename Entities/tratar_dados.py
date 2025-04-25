@@ -44,9 +44,11 @@ class AlimentarBase:
         df_columns.insert(2, "Divisão")
         df_columns.insert(4, "Conta 1")
         df = df[df_columns]
+
+        #df['Conta lnçto.contrap.'] = df['Conta lnçto.contrap.'].apply(lambda x: int(x) if str(x).isdigit() else 0)
         df = df.astype({
             "Conta": int,
-            "Conta lnçto.contrap.": int,
+            #"Conta lnçto.contrap.": int,
             "Nº documento": int,
             "Chave de lançamento": int
             })
@@ -76,13 +78,15 @@ class AlimentarBase:
                 df_temp['Conta 1'] = ""
             
             print(P("Tratando dados da planilha", color='yellow'))
-            df_merge = pd.concat([df_temp, df_append], ignore_index=True)
+            df_temp_clean = df_temp.dropna(axis=1, how='all')
+            df_append_clean = df_append.dropna(axis=1, how='all')            
+            df_merge = pd.concat([df_temp_clean, df_append_clean], ignore_index=True)
             df_merge = df_merge.astype(
                 {   
                     "Divisão 1": str,
                     "Conta": int,
-                    "Conta lnçto.contrap.": int,
-                    "Nº documento": int,
+                    #"Conta lnçto.contrap.": int,
+                    "Nº documento": int, 
                     "Chave de lançamento": int,
                     "Atribuição": str                
                 }
@@ -139,6 +143,7 @@ class Tabela:
         self.__sheet_name = sheet_name
 
     def criar_adm(self) -> bool:
+        print(P("Criando tabela de despesas administrativas", color='yellow'))
         Functions.fechar_excel(self.file_path)
         app = xw.App(visible=False)
         with app.books.open(self.file_path) as wb:
@@ -162,8 +167,11 @@ class Tabela:
                 ws_desp = wb.sheets.add('Despesas')
             
             datas:list = df['Ano/Mês'].unique().tolist() #type:ignore
+            
+
             if isinstance(datas, list):
                 datas.reverse()
+                
             
             #df_final = deepcopy(df['Conta 1']) #type:ignore
             #df_final.drop_duplicates(inplace=True)
@@ -241,10 +249,12 @@ class Tabela:
             pass
         sleep(5)
         Functions.fechar_excel(self.file_path)
+        print(P("Tabela de despesas administrativas criada com sucesso!", color='green'))
         return True
         #df_final.to_excel('teste.xlsx', index=False)
 
     def criar_comercial(self) -> bool:
+        print(P("Criando tabela de despesas comerciais", color='yellow'))
         Functions.fechar_excel(self.file_path)
         app = xw.App(visible=False)
         with app.books.open(self.file_path) as wb:
@@ -334,10 +344,12 @@ class Tabela:
             pass
         sleep(5)
         Functions.fechar_excel(self.file_path)
+        print(P("Tabela de despesas comerciais criada com sucesso!", color='green'))
         return True
         #df_final.to_excel('teste.xlsx', index=False)
 
     def criar_outras_desp(self) -> bool:
+        print(P("Criando tabela de outras despesas", color='yellow'))
         Functions.fechar_excel(self.file_path)
         app = xw.App(visible=False)
         with app.books.open(self.file_path) as wb:
@@ -456,5 +468,6 @@ class Tabela:
             pass
         sleep(5)
         Functions.fechar_excel(self.file_path)
+        print(P("Tabela de outras despesas criada com sucesso!", color='green'))
         return True
         #df_final.to_excel('teste.xlsx', index=False)

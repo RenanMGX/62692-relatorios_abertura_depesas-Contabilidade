@@ -2,6 +2,8 @@ import pandas as pd
 from copy import deepcopy
 from datetime import datetime
 import numpy as np
+import locale
+locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
 
 def criar_colunas_por_data(df:pd.DataFrame, datas:list, *, coluna:str='Descrição') -> pd.DataFrame:
     df_final = deepcopy(df[coluna]) #type:ignore
@@ -40,7 +42,6 @@ def __criar_sub_total(df: pd.DataFrame, *, coluna_primaria:str, colunas:list) ->
 
 def criar_acumulado(df: pd.DataFrame, datas:list, *, coluna:str) -> pd.DataFrame:
     df_temp = deepcopy(df)
-    
     #import pdb; pdb.set_trace()
     subtotal = df_temp.sum()
     subtotal[coluna] = 'Total Despesas'
@@ -68,11 +69,11 @@ def criar_colunas_calculadas(
             
     total = df_final['Total'].sum()#.round(2)
             
-    df_final['Repres.%'] = df_final.apply(lambda x: round(x['Total']/ total, 4), axis=1)
-            
+    #df_final['Repres.%'] = df_final.apply(lambda x: round(x['Total']/ total, 4), axis=1)
+    df_final['Repres.%'] = divisao_entre_coluna_valor_total(df_final['Total'], total, _round=4)
     ultimo_mes_extenso = datetime.strptime(datas[-1], '%Y/%m').strftime('%b/%y')
             
-    nome_coluna_r = f"V.H R$ {ultimo_mes_extenso} - (2m - µ)"
+    nome_coluna_r = f"V.H R$ {ultimo_mes_extenso.title()} - (2m - µ)"
     if len(datas) == 1:
         df_final[nome_coluna_r] = df_final[datas[0]].round(2)
     elif len(datas) == 2:
@@ -83,7 +84,7 @@ def criar_colunas_calculadas(
             df_final[nome_coluna_r] = 0     
                 
                 
-    nome_coluna_p = f"V.H % {ultimo_mes_extenso} - (2m - µ)"    
+    nome_coluna_p = f"V.H % {ultimo_mes_extenso.title()} - (2m - µ)"    
     
     
     if sub_total:
@@ -130,6 +131,22 @@ def divisao_entre_duas_colunas(df1:pd.Series, df2:pd.Series, *, _round:int=2) ->
     for num in range(len(numerador)):
         try:
             resultado.append(round(numerador[num] / denominador[num], _round))
+        except:
+            resultado.append(0)
+            
+    return resultado
+
+def divisao_entre_coluna_valor_total(df1:pd.Series, valor:int|float, *, _round:int=2) -> list:
+    numerador = df1.tolist()
+    valor = valor
+        
+    resultado = []
+    for num in range(len(numerador)):
+        try:
+            if (valor != 0) and (numerador[num] != 0):
+                resultado.append(round(numerador[num] / valor, _round))
+            else:
+                resultado.append(0)
         except:
             resultado.append(0)
             
