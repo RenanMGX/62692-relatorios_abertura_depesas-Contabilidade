@@ -27,6 +27,7 @@ class JsonArgs:
 class Execute:
     @staticmethod
     def start():
+        
         if not (args:=JsonArgs.get(delete_after=True)):
             print(P("Nenhum argumento encontrado."))
             raise Exception("Nenhum argumento encontrado.")
@@ -38,50 +39,50 @@ class Execute:
             sap.limpar_download_path()
             
             # Relatório de Despesas Administrativas
-            if files_path.get('adm'):
+            if files_path.get('desp_adm'):
                 try:
                     path_adm_file = sap.fbl3n(relatorio='despAdm', date=date)
-                    AlimentarBase(files_path['adm']).add(path_adm_file)
+                    AlimentarBase(files_path['desp_adm']).add(path_adm_file)
                 except Exception as err:
                     Logs().register(status='Error', description=str(err), exception=traceback.format_exc())
                     print(P("Erro ao processar o relatório de Despesas Administrativas."))
                 try:
-                    Tabela(files_path['adm']).criar_adm()
+                    Tabela(files_path['desp_adm']).criar_adm()
                 except Exception as err:
                     Logs().register(status='Error', description=str(err), exception=traceback.format_exc())
                     print(P("Erro ao criar tabela de Despesas Administrativas."))
 
             # Relatório de Despesas Comerciais
-            if files_path.get('comercial'):
+            if files_path.get('desp_comercial'):
                 try:
                     path_comer_file = sap.fbl3n(relatorio='despCom', date=date)
-                    AlimentarBase(files_path['comercial']).add(path_comer_file)
+                    AlimentarBase(files_path['desp_comercial']).add(path_comer_file)
                 except Exception as err:
                     Logs().register(status='Error', description=str(err), exception=traceback.format_exc())
                     print(P("Erro ao processar o relatório de Despesas Comerciais."))
                 try:
-                    Tabela(files_path['comercial']).criar_comercial()
+                    Tabela(files_path['desp_comercial']).criar_comercial()
                 except Exception as err:
                     Logs().register(status='Error', description=str(err), exception=traceback.format_exc())
                     print(P("Erro ao criar tabela de Despesas Comerciais."))
             
             # Relatório de Outras Despesas
-            if files_path.get('outras'):
+            if files_path.get('outras_despesas'):
                 try:
                     path_outras_desp_file = sap.fbl3n(relatorio='outrasDesp', date=date)
-                    AlimentarBase(files_path['outras']).add(path_outras_desp_file)
+                    AlimentarBase(files_path['outras_despesas']).add(path_outras_desp_file)
                 except Exception as err:
                     Logs().register(status='Error', description=str(err), exception=traceback.format_exc())
                     print(P("Erro ao processar o relatório de Outras Despesas."))
                 try:
-                    Tabela(files_path['outras']).criar_outras_desp()
+                    Tabela(files_path['outras_despesas']).criar_outras_desp()
                 except Exception as err:
                     Logs().register(status='Error', description=str(err), exception=traceback.format_exc())
                     print(P("Erro ao criar tabela de Outras Despesas."))
                 
             print(P("Atualização concluída com sucesso!"))
             
-            
+            #import pdb; pdb.set_trace()
     
     @staticmethod
     def test():
