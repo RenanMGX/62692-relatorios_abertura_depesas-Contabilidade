@@ -29,7 +29,7 @@ class JsonArgs:
 def verificar_pastas():
     pastas = ['json', 'files']
     for pasta in pastas:    
-        path = os.path.join(os.getcwd(), 'files')
+        path = os.path.join(os.getcwd(), pasta)
         if not os.path.exists(path):
             os.makedirs(path)
     
