@@ -3,6 +3,7 @@ from Entities.extrair_relatorio import ExtrairRelatorio, datetime
 from Entities.dependencies.arguments import Arguments
 from Entities.dependencies.functions import P
 from Entities.dependencies.logs import Logs, traceback
+from Entities.dependencies.informativo import Informativo
 import shutil
 import os
 import sys
@@ -27,9 +28,11 @@ class JsonArgs:
 class Execute:
     @staticmethod
     def start():
+        Informativo.limpar()
         
+        Informativo.register("Iniciando o processo de atualização.", color='<django:green>')
         if not (args:=JsonArgs.get(delete_after=True)):
-            print(P("Nenhum argumento encontrado."))
+            Informativo.register("Nenhum argumento encontrado.", color='<django:red>')
             raise Exception("Nenhum argumento encontrado.")
         else:
             files_path:dict = args['files_path']
@@ -40,47 +43,71 @@ class Execute:
             
             # Relatório de Despesas Administrativas
             if files_path.get('desp_adm'):
+                Informativo.register("Iniciando o processo de atualização de Despesas Administrativas.", color='<django:blue>')
                 try:
                     path_adm_file = sap.fbl3n(relatorio='despAdm', date=date)
+                    Informativo.register(f"Relatório de Despesas Administrativas baixado com sucesso: {path_adm_file}", color='<django:yellow>')
+                    
                     AlimentarBase(files_path['desp_adm']).add(path_adm_file)
+                    Informativo.register("Relatório de Despesas Administrativas processado com sucesso.", color='<django:yellow>')
+                    
                 except Exception as err:
                     Logs().register(status='Error', description=str(err), exception=traceback.format_exc())
-                    print(P("Erro ao processar o relatório de Despesas Administrativas."))
+                    Informativo.register(f"Erro ao processar o relatório de Despesas Administrativas.<br>{str(err)}", color='<django:red>')
+                    
                 try:
                     Tabela(files_path['desp_adm']).criar_adm()
+                    Informativo.register("Tabela de Despesas Administrativas criada com sucesso.", color='<django:yellow>')
+                    
                 except Exception as err:
                     Logs().register(status='Error', description=str(err), exception=traceback.format_exc())
-                    print(P("Erro ao criar tabela de Despesas Administrativas."))
+                    Informativo.register(f"Erro ao criar tabela de Despesas Administrativas..<br>{str(err)}", color='<django:red>')
 
             # Relatório de Despesas Comerciais
             if files_path.get('desp_comercial'):
+                Informativo.register("Iniciando o processo de atualização de Despesas Comerciais.", color='<django:blue>')
                 try:
                     path_comer_file = sap.fbl3n(relatorio='despCom', date=date)
+                    Informativo.register(f"Relatório de Despesas Comerciais baixado com sucesso: {path_comer_file}", color='<django:yellow>')
+                    
                     AlimentarBase(files_path['desp_comercial']).add(path_comer_file)
+                    Informativo.register("Relatório de Despesas Comerciais processado com sucesso.", color='<django:yellow>')
+                    
                 except Exception as err:
                     Logs().register(status='Error', description=str(err), exception=traceback.format_exc())
-                    print(P("Erro ao processar o relatório de Despesas Comerciais."))
+                    Informativo.register(f"Erro ao processar o relatório de Despesas Comerciais.<br>{str(err)}", color='<django:red>')
+                    
                 try:
                     Tabela(files_path['desp_comercial']).criar_comercial()
+                    Informativo.register("Tabela de Despesas Comerciais criada com sucesso.", color='<django:yellow>')
+                    
                 except Exception as err:
                     Logs().register(status='Error', description=str(err), exception=traceback.format_exc())
-                    print(P("Erro ao criar tabela de Despesas Comerciais."))
+                    Informativo.register(f"Erro ao criar tabela de Despesas Comerciais.<br>{str(err)}", color='<django:red>')
             
             # Relatório de Outras Despesas
             if files_path.get('outras_despesas'):
+                Informativo.register("Iniciando o processo de atualização de Outras Despesas.", color='<django:blue>')
                 try:
                     path_outras_desp_file = sap.fbl3n(relatorio='outrasDesp', date=date)
+                    Informativo.register(f"Relatório de Outras Despesas baixado com sucesso: {path_outras_desp_file}", color='<django:yellow>')
+                    
                     AlimentarBase(files_path['outras_despesas']).add(path_outras_desp_file)
+                    Informativo.register("Relatório de Outras Despesas processado com sucesso.", color='<django:yellow>')
+                    
                 except Exception as err:
                     Logs().register(status='Error', description=str(err), exception=traceback.format_exc())
-                    print(P("Erro ao processar o relatório de Outras Despesas."))
+                    Informativo.register(f"Erro ao processar o relatório de Outras Despesas.<br>{str(err)}", color='<django:red>')
+                    
                 try:
                     Tabela(files_path['outras_despesas']).criar_outras_desp()
+                    Informativo.register("Tabela de Outras Despesas criada com sucesso.", color='<django:yellow>')
+                    
                 except Exception as err:
                     Logs().register(status='Error', description=str(err), exception=traceback.format_exc())
-                    print(P("Erro ao criar tabela de Outras Despesas."))
+                    Informativo.register(f"Erro ao criar tabela de Outras Despesas.<br>{str(err)}", color='<django:red>')
                 
-            print(P("Atualização concluída com sucesso!"))
+            Informativo.register("Atualização concluída com sucesso!", color='<django:green>')
             
             #import pdb; pdb.set_trace()
     
