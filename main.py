@@ -25,9 +25,19 @@ class JsonArgs:
             data['date'] = datetime.fromisoformat(data['date'])
             return data
 
+
+def verificar_pastas():
+    pastas = ['json', 'files']
+    for pasta in pastas:    
+        path = os.path.join(os.getcwd(), 'files')
+        if not os.path.exists(path):
+            os.makedirs(path)
+    
+    
 class Execute:
     @staticmethod
     def start():
+        verificar_pastas()
         Informativo.limpar()
         
         Informativo.register("Iniciando o processo de atualização.", color='<django:green>')
