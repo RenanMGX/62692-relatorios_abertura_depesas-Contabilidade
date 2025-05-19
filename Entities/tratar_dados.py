@@ -84,10 +84,10 @@ class AlimentarBase:
             df_merge = df_merge.astype(
                 {   
                     "Divisão 1": str,
-                    "Conta": int,
+                    #"Conta": int,
                     #"Conta lnçto.contrap.": int,
-                    "Nº documento": int, 
-                    "Chave de lançamento": int,
+                    #"Nº documento": int, 
+                    #"Chave de lançamento": int,
                     "Atribuição": str                
                 }
                 )
